@@ -1,63 +1,5 @@
-#ifndef __RecoLocalCalo_HGCRecProducers_HGCalLayerClusterProducer_H__
-#define __RecoLocalCalo_HGCRecProducers_HGCalLayerClusterProducer_H__
 
-// user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/stream/EDProducer.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "FWCore/ParameterSet/interface/PluginDescription.h"
-
-#include "RecoParticleFlow/PFClusterProducer/interface/RecHitTopologicalCleanerBase.h"
-#include "RecoParticleFlow/PFClusterProducer/interface/SeedFinderBase.h"
-#include "RecoParticleFlow/PFClusterProducer/interface/InitialClusteringStepBase.h"
-#include "RecoParticleFlow/PFClusterProducer/interface/PFClusterBuilderBase.h"
-#include "RecoParticleFlow/PFClusterProducer/interface/PFCPositionCalculatorBase.h"
-#include "RecoParticleFlow/PFClusterProducer/interface/PFClusterEnergyCorrectorBase.h"
-#include "RecoLocalCalo/HGCalRecProducers/interface/ComputeClusterTime.h"
-
-#include "RecoLocalCalo/HGCalRecProducers/interface/HGCalLayerClusterAlgoFactory.h"
-#include "RecoLocalCalo/HGCalRecAlgos/interface/HGCalDepthPreClusterer.h"
-
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
-#include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
-
-#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
-#include "DataFormats/Common/interface/ValueMap.h"
-
-using Density = hgcal_clustering::Density;
-
-class HGCalLayerClusterProducer : public edm::stream::EDProducer<> {
-public:
-  HGCalLayerClusterProducer(const edm::ParameterSet&);
-  ~HGCalLayerClusterProducer() override {}
-  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-
-  void produce(edm::Event&, const edm::EventSetup&) override;
-
-private:
-  edm::EDGetTokenT<HGCRecHitCollection> hits_ee_token;
-  edm::EDGetTokenT<HGCRecHitCollection> hits_fh_token;
-  edm::EDGetTokenT<HGCRecHitCollection> hits_bh_token;
-  edm::EDGetTokenT<HGCRecHitCollection> hits_hfnose_token;
-
-  reco::CaloCluster::AlgoId algoId;
-
-  std::unique_ptr<HGCalClusteringAlgoBase> algo;
-  bool doSharing;
-  std::string detector;
-
-  std::string timeClname;
-  double timeOffset;
-  unsigned int nHitsTime;
-};
-
-DEFINE_FWK_MODULE(HGCalLayerClusterProducer);
+#include "RecoLocalCalo/HGCalRecProducers/plugins/HGCalLayerClusterProducer.h"
 
 HGCalLayerClusterProducer::HGCalLayerClusterProducer(const edm::ParameterSet& ps)
     : algoId(reco::CaloCluster::undefined),
@@ -144,38 +86,29 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   switch (algoId) {
     case reco::CaloCluster::hfnose:
       evt.getByToken(hits_hfnose_token, hfnose_hits);
-      algo->populate(*hfnose_hits);
-      for (auto const& it : *hfnose_hits)
-        hitmap[it.detid().rawId()] = &(it);
+      produceForAlgoId(hfnose_hits, hitmap );
       break;
     case reco::CaloCluster::hgcal_em:
       evt.getByToken(hits_ee_token, ee_hits);
-      algo->populate(*ee_hits);
-      for (auto const& it : *ee_hits)
-        hitmap[it.detid().rawId()] = &(it);
+      produceForAlgoId(ee_hits, hitmap );
       break;
     case reco::CaloCluster::hgcal_had:
       evt.getByToken(hits_fh_token, fh_hits);
       evt.getByToken(hits_bh_token, bh_hits);
       if (fh_hits.isValid()) {
-        algo->populate(*fh_hits);
-        for (auto const& it : *fh_hits)
-          hitmap[it.detid().rawId()] = &(it);
-      } else if (bh_hits.isValid()) {
+        produceForAlgoId(fh_hits, hitmap );
+      } 
+      else if (bh_hits.isValid()) {
         algo->populate(*bh_hits);
       }
       break;
     case reco::CaloCluster::hgcal_mixed:
       evt.getByToken(hits_ee_token, ee_hits);
-      algo->populate(*ee_hits);
-      for (auto const& it : *ee_hits) {
-        hitmap[it.detid().rawId()] = &(it);
-      }
+      produceForAlgoId(ee_hits, hitmap );
+
       evt.getByToken(hits_fh_token, fh_hits);
-      algo->populate(*fh_hits);
-      for (auto const& it : *fh_hits) {
-        hitmap[it.detid().rawId()] = &(it);
-      }
+      produceForAlgoId(fh_hits, hitmap );
+
       evt.getByToken(hits_bh_token, bh_hits);
       algo->populate(*bh_hits);
       break;
@@ -248,4 +181,4 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   algo->reset();
 }
 
-#endif  //__RecoLocalCalo_HGCRecProducers_HGCalLayerClusterProducer_H__
+DEFINE_FWK_MODULE(HGCalLayerClusterProducer);
