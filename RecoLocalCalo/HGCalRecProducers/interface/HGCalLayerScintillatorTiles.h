@@ -13,11 +13,21 @@
 #include <cmath>
 #include <algorithm>
 #include <cassert>
-
+/**
+ * @brief LayerTiles for scintillator layer
+ * 
+ * @tparam T type of calolimetr tiles - constatnts
+*/
 template <typename T>
 class HGCalLayerScintillatorTilesT {
 public:
   typedef T type;
+  /**
+   * @brief Fill the tile vector
+   * 
+   * @param[in] eta vector of point in eta coordinates
+   * @param[in] phi vector of points in phi coordinates
+  */
   void fill(const std::vector<float>& eta,
             const std::vector<float>& phi) {
     auto cellsSize = eta.size(); 
@@ -26,6 +36,12 @@ public:
     }
   }
 
+  /**
+   * @brief Returns etaBin for given eta
+   * 
+   * @param[in] eta for bin
+   * @returns etaBin when it is in boundaries (bigger then 0 and smaller then  T::nColumnsEta - 1)
+  */
   int getEtaBin(float eta) const {
     constexpr float etaRange = T::maxEta - T::minEta;
     static_assert(etaRange >= 0.);
@@ -35,6 +51,12 @@ public:
     return etaBin;
   }
 
+  /**
+   * @brief Returns phiBin for given phi
+   * 
+   * @param[in] phi for bin
+   * @returns phiBin 
+  */
   int getPhiBin(float phi) const {
     auto normPhi = normalizedPhi(phi);
     constexpr float r = T::nRowsPhi * M_1_PI * 0.5f;

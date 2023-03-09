@@ -1,5 +1,6 @@
 // Authors: Olivie Franklova - olivie.abigail.franklova@cern.ch
 // Date: 03/2023
+// @file HGCalLayerSiliconTiles.h template for silicon layer tiles
 
 #ifndef RecoLocalCalo_HGCalRecProducers_HGCalLayerSiliconTiles_h
 #define RecoLocalCalo_HGCalRecProducers_HGCalLayerSiliconTiles_h
@@ -14,10 +15,22 @@
 #include <algorithm>
 #include <cassert>
 
+/**
+ * @brief LayerTiles for silicon layer
+ * 
+ * @tparam T type of calolimetr tiles - constatnts
+*/
 template <typename T>
 class HGCalLayerSiliconTilesT {
+
 public:
   typedef T type;
+
+  /**
+   * @brief Fill the tiles array
+   * @param[in] x vector of points in x axes
+   * @param[in] y vector of points inj y axes
+  */
   void fill(const std::vector<float>& x,
             const std::vector<float>& y,
             ) {
@@ -27,20 +40,32 @@ public:
     }
   }
 
+  /**
+   * @brief Returns xBin for given x
+   * 
+   * @param[in] x for bin
+   * @returns xBin when it is in boundaries (bigger then 0 and smaller then  T::nColumns - 1)
+  */
   int getXBin(float x) const {
     constexpr float xRange = T::maxX - T::minX; 
     static_assert(xRange >= 0.);
-    constexpr float r = T::nColumns / xRange;
-    int xBin = (x - T::minX) * r;
-    xBin = std::clamp(xBin, 0, T::nColumns - 1);
+    constexpr float r = T::nColumns / xRange; // width of one column
+    int xBin = (x - T::minX) * r; // normalize the x and multipy by width of column
+    xBin = std::clamp(xBin, 0, T::nColumns - 1); 
     return xBin;
   }
 
+  /**
+   * @brief Returns yBin for given y
+   * 
+   * @param[in] y for bin
+   * @returns yBin when it is in boundaries (bigger then 0 and smaller then  T::nRows - 1) else the boundaries
+  */
   int getYBin(float y) const {
     constexpr float yRange = T::maxY - T::minY;
     static_assert(yRange >= 0.);
-    constexpr float r = T::nRows / yRange;
-    int yBin = (y - T::minY) * r;
+    constexpr float r = T::nRows / yRange; // lenght of one row
+    int yBin = (y - T::minY) * r; // normalize the y and multipy by lenght of row
     yBin = std::clamp(yBin, 0, T::nRows - 1);
     return yBin;
   }
