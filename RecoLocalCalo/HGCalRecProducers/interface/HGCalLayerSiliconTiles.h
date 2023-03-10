@@ -97,5 +97,5 @@ private:
 };
 
 using HGCalLayerSiliconTiles = HGCalLayerSiliconTilesT<HGCalTilesConstants>;
-using HFNoseLayerSiliconTiles = HGCalLayerSiliconTilesT<HFNoseTilesConstants>;
+using HFNoseLayerSiliconTiles = HGCalLayerSiliconTilesT<HFNoseTilesConstants>; //todo so should we remove this
 #endif

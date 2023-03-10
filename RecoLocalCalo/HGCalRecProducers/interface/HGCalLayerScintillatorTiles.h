@@ -108,5 +108,5 @@ private:
 };
 
 using HGCalLayerScintillatorTiles = HGCalLayerScintillatorTilesT<HGCalTilesConstants>;
-using HFNoseLayerScintillatorTiles = HGCalLayerScintillatorTilesT<HFNoseTilesConstants>;
+using HFNoseLayerScintillatorTiles = HGCalLayerScintillatorTilesT<HFNoseTilesConstants>; //todo so should we remove this ?
 #endif
