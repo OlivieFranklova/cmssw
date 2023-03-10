@@ -37,13 +37,8 @@ HGCalLayerClusterProducer::HGCalLayerClusterProducer(const edm::ParameterSet& ps
     algo->setAlgoId(algoId);
   }
 
-  produces<std::vector<float>>("InitialLayerClustersMask");
-  produces<std::vector<reco::BasicCluster>>();
-  produces<std::vector<reco::BasicCluster>>("sharing");
-  //density
-  produces<Density>();
-  //time for layer clusters
-  produces<edm::ValueMap<std::pair<float, float>>>(timeClname);
+  setUpProduces();
+  
 }
 
 void HGCalLayerClusterProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {

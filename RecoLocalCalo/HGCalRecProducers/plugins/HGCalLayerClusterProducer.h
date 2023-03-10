@@ -33,7 +33,7 @@
 
 using Density = hgcal_clustering::Density;
 /**
- * Layer cluster producer is child of EDProducer 
+ * @brief Layer cluster producer is child of EDProducer 
  * 
  * class overides method produce and has method fillDescription
 */
@@ -78,11 +78,30 @@ protected:
   double timeOffset;
   unsigned int nHitsTime;
 
+  /**
+  * @brief this method populate algo for specific hits and then fill hitmap
+  * method is used in produce in switch
+  */
   void produceForAlgoId(edm::Handle<HGCRecHitCollection>& hits, std::unordered_map<uint32_t, const HGCRecHit*>& hitmap ){
     algo->populate(*hits);
     for (auto const& it : *hits)
       hitmap[it.detid().rawId()] = &(it);
   }
+
+  /**
+  * @brief this method do all set up for produces, method is used in constructor
+  */
+  void setUpProduces(){
+    produces<std::vector<float>>("InitialLayerClustersMask");
+    produces<std::vector<reco::BasicCluster>>();
+    produces<std::vector<reco::BasicCluster>>("sharing");
+    //density
+    produces<Density>();
+    //time for layer clusters
+    produces<edm::ValueMap<std::pair<float, float>>>(timeClname);
+  }
+
+
 };
 
 #endif  //__RecoLocalCalo_HGCRecProducers_HGCalLayerClusterProducer_H__
