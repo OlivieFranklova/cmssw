@@ -34,10 +34,28 @@ using Density = hgcal_clustering::Density;
 
 class HGCalLayerClusterProducer : public edm::stream::EDProducer<> {
 public:
+  /**
+   * @brief Constructor with parameter settings - which can be changed in hgcalLayerCluster_cff.py.
+   * Constructor will set all variables by input param ps. 
+   * algoID variables will be set accordingly to the detector type.
+   * 
+   * @param[in] ps parametr set to set variables
+  */
   HGCalLayerClusterProducer(const edm::ParameterSet&);
   ~HGCalLayerClusterProducer() override {}
+  /**
+   * @brief Method fill description which will be used in pyhton file.
+   * 
+   * @param[out] description to be fill
+  */
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
+  /**
+   * @brief Method run the algoritm to get clusters.
+   * 
+   * @param[in, out] evt from get info and put result
+   * @param[in] es to get event setup info
+  */
   void produce(edm::Event&, const edm::EventSetup&) override;
 
 private:
@@ -55,6 +73,11 @@ private:
   std::string timeClname;
   double timeOffset;
   unsigned int nHitsTime;
+
+  /**
+   * @brief Sets algoId accordingly to the detector type
+  */
+  void setAlgoId();
 };
 
 DEFINE_FWK_MODULE(HGCalLayerClusterProducer);
