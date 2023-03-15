@@ -59,10 +59,7 @@ public:
   void produce(edm::Event&, const edm::EventSetup&) override;
 
 private:
-  edm::EDGetTokenT<HGCRecHitCollection> hits_ee_token;
-  edm::EDGetTokenT<HGCRecHitCollection> hits_fh_token;
-  edm::EDGetTokenT<HGCRecHitCollection> hits_bh_token;
-  edm::EDGetTokenT<HGCRecHitCollection> hits_hfnose_token;
+  edm::EDGetTokenT<HGCRecHitCollection> hits_token;
 
   reco::CaloCluster::AlgoId algoId;
 
@@ -71,7 +68,6 @@ private:
   std::string detector;
 
   std::string timeClname;
-  double timeOffset;
   unsigned int nHitsTime;
 
   /**
@@ -85,28 +81,12 @@ DEFINE_FWK_MODULE(HGCalLayerClusterProducer);
 HGCalLayerClusterProducer::HGCalLayerClusterProducer(const edm::ParameterSet& ps)
     : algoId(reco::CaloCluster::undefined),
       doSharing(ps.getParameter<bool>("doSharing")),
-      detector(ps.getParameter<std::string>("detector")),  // one of EE, FH, BH or "all"
+      detector(ps.getParameter<std::string>("detector")),  // one of EE, FH, BH, HFNose
       timeClname(ps.getParameter<std::string>("timeClname")),
-      timeOffset(ps.getParameter<double>("timeOffset")),
       nHitsTime(ps.getParameter<unsigned int>("nHitsTime")) {
-  if (detector == "HFNose") {
-    hits_hfnose_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HFNoseInput"));
-    algoId = reco::CaloCluster::hfnose;
-  } else if (detector == "all") {
-    hits_ee_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HGCEEInput"));
-    hits_fh_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HGCFHInput"));
-    hits_bh_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HGCBHInput"));
-    algoId = reco::CaloCluster::hgcal_mixed;
-  } else if (detector == "EE") {
-    hits_ee_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HGCEEInput"));
-    algoId = reco::CaloCluster::hgcal_em;
-  } else if (detector == "FH") {
-    hits_fh_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HGCFHInput"));
-    algoId = reco::CaloCluster::hgcal_had;
-  } else {
-    hits_bh_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("HGCBHInput"));
-    algoId = reco::CaloCluster::hgcal_had;
-  }
+
+  setAlgoId(); //sets algo id according to detector type
+  hits_token = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("recHits"));
 
   auto pluginPSet = ps.getParameter<edm::ParameterSet>("plugin");
   if (detector == "HFNose") {
@@ -135,23 +115,16 @@ void HGCalLayerClusterProducer::fillDescriptions(edm::ConfigurationDescriptions&
 
   desc.add<edm::ParameterSetDescription>("plugin", pluginDesc);
   desc.add<std::string>("detector", "all")
-      ->setComment("all (does not include HFNose); other options: EE, FH, HFNose; other value defaults to BH");
+      ->setComment("all (does not include HFNose); other options: EE, FH, HFNose; other value defaults to EE");
   desc.add<bool>("doSharing", false);
-  desc.add<edm::InputTag>("HFNoseInput", edm::InputTag("HGCalRecHit", "HGCHFNoseRecHits"));
-  desc.add<edm::InputTag>("HGCEEInput", edm::InputTag("HGCalRecHit", "HGCEERecHits"));
-  desc.add<edm::InputTag>("HGCFHInput", edm::InputTag("HGCalRecHit", "HGCHEFRecHits"));
-  desc.add<edm::InputTag>("HGCBHInput", edm::InputTag("HGCalRecHit", "HGCHEBRecHits"));
+  desc.add<edm::InputTag>("recHits", edm::InputTag("HGCalRecHit", "HGCEERecHits"));
   desc.add<std::string>("timeClname", "timeLayerCluster");
-  desc.add<double>("timeOffset", 0.0);
   desc.add<unsigned int>("nHitsTime", 3);
   descriptions.add("hgcalLayerClusters", desc);
 }
 
 void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
-  edm::Handle<HGCRecHitCollection> hfnose_hits;
-  edm::Handle<HGCRecHitCollection> ee_hits;
-  edm::Handle<HGCRecHitCollection> fh_hits;
-  edm::Handle<HGCRecHitCollection> bh_hits;
+  edm::Handle<HGCRecHitCollection> hits;
 
   std::unique_ptr<std::vector<reco::BasicCluster>> clusters(new std::vector<reco::BasicCluster>),
       clusters_sharing(new std::vector<reco::BasicCluster>);
@@ -164,47 +137,13 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   // timing in digi for BH not implemented for now
   std::unordered_map<uint32_t, const HGCRecHit*> hitmap;
 
-  switch (algoId) {
-    case reco::CaloCluster::hfnose:
-      evt.getByToken(hits_hfnose_token, hfnose_hits);
-      algo->populate(*hfnose_hits);
-      for (auto const& it : *hfnose_hits)
-        hitmap[it.detid().rawId()] = &(it);
-      break;
-    case reco::CaloCluster::hgcal_em:
-      evt.getByToken(hits_ee_token, ee_hits);
-      algo->populate(*ee_hits);
-      for (auto const& it : *ee_hits)
-        hitmap[it.detid().rawId()] = &(it);
-      break;
-    case reco::CaloCluster::hgcal_had:
-      evt.getByToken(hits_fh_token, fh_hits);
-      evt.getByToken(hits_bh_token, bh_hits);
-      if (fh_hits.isValid()) {
-        algo->populate(*fh_hits);
-        for (auto const& it : *fh_hits)
-          hitmap[it.detid().rawId()] = &(it);
-      } else if (bh_hits.isValid()) {
-        algo->populate(*bh_hits);
-      }
-      break;
-    case reco::CaloCluster::hgcal_mixed:
-      evt.getByToken(hits_ee_token, ee_hits);
-      algo->populate(*ee_hits);
-      for (auto const& it : *ee_hits) {
-        hitmap[it.detid().rawId()] = &(it);
-      }
-      evt.getByToken(hits_fh_token, fh_hits);
-      algo->populate(*fh_hits);
-      for (auto const& it : *fh_hits) {
-        hitmap[it.detid().rawId()] = &(it);
-      }
-      evt.getByToken(hits_bh_token, bh_hits);
-      algo->populate(*bh_hits);
-      break;
-    default:
-      break;
+  evt.getByToken(hits_token, hits);
+  algo->populate(*hits);
+  if (detector != "BH") {
+    for (auto const& it : *hits)
+      hitmap[it.detid().rawId()] = &(it);
   }
+
   algo->makeClusters();
   *clusters = algo->getClusters(false);
   if (doSharing)
@@ -271,4 +210,14 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   algo->reset();
 }
 
+// todo or we can make a map but I dont think it is necessary
+void HGCalLayerClusterProducer::setAlgoId(){
+    if (detector == "HFNose") {
+      algoId = reco::CaloCluster::hfnose;
+    }  else if (detector == "EE") {
+      algoId = reco::CaloCluster::hgcal_em;
+    } else { //for FH or BH
+     algoId = reco::CaloCluster::hgcal_had;
+    }
+}
 #endif  //__RecoLocalCalo_HGCRecProducers_HGCalLayerClusterProducer_H__
