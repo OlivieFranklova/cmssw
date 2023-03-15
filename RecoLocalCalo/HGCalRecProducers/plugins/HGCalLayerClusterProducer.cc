@@ -191,9 +191,11 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
     }
     times.push_back(timeCl);
   }
-  std::unique_ptr<std::vector<float>> layerClustersMask(new std::vector<float>);
-  layerClustersMask->resize(clusterHandle->size(), 1.0);
-  evt.put(std::move(layerClustersMask), "InitialLayerClustersMask");
+  if (detector == "HFNose"){
+    std::unique_ptr<std::vector<float>> layerClustersMask(new std::vector<float>);
+    layerClustersMask->resize(clusterHandle->size(), 1.0);
+    evt.put(std::move(layerClustersMask), "InitialLayerClustersMask");
+  }
 
   auto timeCl = std::make_unique<edm::ValueMap<std::pair<float, float>>>();
   edm::ValueMap<std::pair<float, float>>::Filler filler(*timeCl);
