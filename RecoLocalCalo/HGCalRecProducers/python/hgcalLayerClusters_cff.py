@@ -8,7 +8,7 @@ from RecoLocalCalo.HGCalRecProducers.HGCalUncalibRecHit_cfi import HGCalUncalibR
 
 from SimCalorimetry.HGCalSimProducers.hgcalDigitizer_cfi import fC_per_ele, HGCAL_noises, hgceeDigitizer, hgchebackDigitizer, hfnoseDigitizer
 
-hgcalLayerClusters_EE = hgcalLayerClusters_.clone(
+hgcalLayerClustersEE = hgcalLayerClusters_.clone(
     detector = 'EE',
     recHits = cms.InputTag("HGCalRecHit", "HGCEERecHits"),
     plugin = dict(
@@ -26,7 +26,7 @@ hgcalLayerClusters_EE = hgcalLayerClusters_.clone(
     )
 )
 
-hgcalLayerClusters_HSi = hgcalLayerClusters_.clone(
+hgcalLayerClustersHSi = hgcalLayerClusters_.clone(
     detector = 'FH',
     recHits = cms.InputTag("HGCalRecHit", "HGCHEFRecHits"),
     plugin = dict(
@@ -44,7 +44,7 @@ hgcalLayerClusters_HSi = hgcalLayerClusters_.clone(
     )
 )
 
-hgcalLayerClusters_HSci = hgcalLayerClusters_.clone(
+hgcalLayerClustersHSci = hgcalLayerClusters_.clone(
     detector = 'BH',
     recHits = cms.InputTag("HGCalRecHit", "HGCHEBRecHits"),
     plugin = dict(

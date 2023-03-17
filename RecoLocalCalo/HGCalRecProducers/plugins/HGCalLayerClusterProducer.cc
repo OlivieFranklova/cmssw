@@ -122,6 +122,7 @@ void HGCalLayerClusterProducer::fillDescriptions(edm::ConfigurationDescriptions&
 void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
   edm::Handle<HGCRecHitCollection> hits;
 
+  std::unique_ptr<std::vector<reco::BasicCluster>> clusters(new std::vector<reco::BasicCluster>);
   auto density = std::make_unique<Density>();
 
   algo->getEventSetup(es);
@@ -139,7 +140,7 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   }
 
   algo->makeClusters();
-  *clusters = algo->getClusters(false);
+  *clusters = algo->getClusters(false); 
 
   auto clusterHandle = evt.put(std::move(clusters));
 
