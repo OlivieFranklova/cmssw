@@ -69,10 +69,11 @@ public:
   edm::EDGetTokenT<Density> HSidensity_token_;
   edm::EDGetTokenT<Density> HScidensity_token_;
 
+  std::string timeClname;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTimeEE_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTimeHSi_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTimeHSci_token_;
-  std::string timeClname;
+
   // OrphanHandle<std::vector<reco::CaloCluster>> clusterHandle; todo
 
   /**
@@ -94,6 +95,7 @@ public:
    * @param[in] ESci Density for hadron scintillator
   */
   void mergeTogether(Density  &merge, const Density &EE, const Density &HSi, const Density &HSci);
+
 
   void addTo(std::vector<std::pair<float, float>> &to, const edm::ValueMap<std::pair<float, float>> &vm){
     size_t size = vm.size();
@@ -129,7 +131,8 @@ public:
    * @return merged result
   */
   template <typename T>
-  T createMerge(edm::Event& evt, const edm::EDGetTokenT<T> &EE_token, const edm::EDGetTokenT<T> &HSi_token, const edm::EDGetTokenT<T> &HSci_token){
+  T createMerge(edm::Event& evt, const edm::EDGetTokenT<T> &EE_token,
+   const edm::EDGetTokenT<T> &HSi_token, const edm::EDGetTokenT<T> &HSci_token){
     edm::Handle<T> EE, HSi, HSci;
     // get values from all three part of detectors
     evt.getByToken(EE_token, EE);
@@ -144,7 +147,11 @@ public:
 DEFINE_FWK_MODULE(MergeClusterProducer); 
 
 MergeClusterProducer::MergeClusterProducer(const edm::ParameterSet& ps)
-    : timeClname(ps.getParameter<std::string>("timeClname")){
+    : timeClname(ps.getParameter<std::string>("timeClname")),
+      clustersTimeEE_token_(consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("time_layerclustersEE"))),
+      clustersTimeHSi_token_(consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("time_layerclustersHSi"))),
+      clustersTimeHSci_token_(consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("time_layerclustersHSci")))
+    {
     EEclusters_token_ = consumes<std::vector<reco::CaloCluster>>(ps.getParameter<edm::InputTag>("layerClustersEE"));
     HSiclusters_token_ = consumes<std::vector<reco::CaloCluster>>(ps.getParameter<edm::InputTag>("layerClustersHSi"));
     HSciclusters_token_ = consumes<std::vector<reco::CaloCluster>>(ps.getParameter<edm::InputTag>("layerClustersHSci"));
