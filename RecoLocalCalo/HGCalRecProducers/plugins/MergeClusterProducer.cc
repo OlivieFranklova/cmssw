@@ -69,7 +69,7 @@ public:
   edm::EDGetTokenT<Density> HSidensity_token_;
   edm::EDGetTokenT<Density> HScidensity_token_;
 
-  std::string timeClname;
+  std::string timeClname_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTimeEE_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTimeHSi_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTimeHSci_token_;
@@ -142,12 +142,13 @@ public:
     mergeTogether(merge, *EE, *HSi, *HSci );
     return merge;
   }
+
 };
 
 DEFINE_FWK_MODULE(MergeClusterProducer); 
 
 MergeClusterProducer::MergeClusterProducer(const edm::ParameterSet& ps)
-    : timeClname(ps.getParameter<std::string>("timeClname")),
+    : timeClname_(ps.getParameter<std::string>("timeClname")),
       clustersTimeEE_token_(consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("time_layerclustersEE"))),
       clustersTimeHSi_token_(consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("time_layerclustersHSi"))),
       clustersTimeHSci_token_(consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("time_layerclustersHSci")))
@@ -166,26 +167,26 @@ MergeClusterProducer::MergeClusterProducer(const edm::ParameterSet& ps)
     //density
     produces<Density>();
     //time for layer clusters
-    produces<edm::ValueMap<std::pair<float, float>>>(timeClname);
+    produces<edm::ValueMap<std::pair<float, float>>>(timeClname_);
 }
 
 void MergeClusterProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   // hgcalMergeLayerClusters
   edm::ParameterSetDescription desc;
   //layer clusters
-  desc.add<edm::InputTag>("layerClustersEE", edm::InputTag("hgcalLayerClusters", "hgcalLayerClustersEE"));
-  desc.add<edm::InputTag>("layerClustersHSi", edm::InputTag("hgcalLayerClusters", "hgcalLayerClustersHSi"));
-  desc.add<edm::InputTag>("layerClustersHSci", edm::InputTag("hgcalLayerClusters", "hgcalLayerClustersHSci"));
+  desc.add<edm::InputTag>("layerClustersEE", edm::InputTag( "hgcalLayerClustersEE"));
+  desc.add<edm::InputTag>("layerClustersHSi", edm::InputTag( "hgcalLayerClustersHSi"));
+  desc.add<edm::InputTag>("layerClustersHSci", edm::InputTag( "hgcalLayerClustersHSci"));
 
   //density
   //todo could be like that??
-  desc.add<edm::InputTag>("densityEE", edm::InputTag("density", "densityEE"));
-  desc.add<edm::InputTag>("densityHSi", edm::InputTag("density", "densityHSi"));
-  desc.add<edm::InputTag>("densityHSci", edm::InputTag("density", "densityHSci"));
+  desc.add<edm::InputTag>("densityEE", edm::InputTag("hgcalLayerClustersEE"));
+  desc.add<edm::InputTag>("densityHSi", edm::InputTag("hgcalLayerClustersHSi"));
+  desc.add<edm::InputTag>("densityHSci", edm::InputTag("hgcalLayerClustersHSci"));
   //time
-  desc.add<edm::InputTag>("time_layerclustersEE", edm::InputTag("hgcalLayerClusters", "timeLayerClusterEE"));
-  desc.add<edm::InputTag>("time_layerclustersHSi", edm::InputTag("hgcalLayerClusters", "timeLayerClusterHSi"));
-  desc.add<edm::InputTag>("time_layerclustersHSci", edm::InputTag("hgcalLayerClusters", "timeLayerClusterHSci"));
+  desc.add<edm::InputTag>("time_layerclustersEE", edm::InputTag( "hgcalLayerClustersEE", "timeLayerCluster"));
+  desc.add<edm::InputTag>("time_layerclustersHSi", edm::InputTag( "hgcalLayerClustersHSi", "timeLayerCluster"));
+  desc.add<edm::InputTag>("time_layerclustersHSci", edm::InputTag( "hgcalLayerClustersHSci", "timeLayerCluster"));
 
   desc.add<std::string>("timeClname", "timeLayerCluster");
   descriptions.add("hgcalMergeLayerClusters", desc);
@@ -218,7 +219,7 @@ void MergeClusterProducer::produce(edm::Event& evt, const edm::EventSetup& es){
   edm::ValueMap<std::pair<float, float>>::Filler filler(*timeCl);
   filler.insert(clusterHandle, times.begin(), times.end());
   filler.fill();
-  evt.put(std::move(timeCl), timeClname);
+  evt.put(std::move(timeCl), timeClname_);
   
 
 
@@ -231,6 +232,8 @@ void MergeClusterProducer::mergeTogether(std::vector<reco::CaloCluster> &merge, 
     merge.insert(merge.end(), EE.begin(), EE.end());
     merge.insert(merge.end(), HSi.begin(), HSi.end());
     merge.insert(merge.end(), HSci.begin(), HSci.end());
+
+
 }
 
  void MergeClusterProducer::mergeTogether(Density  &merge, const Density &EE, const Density &HSi, const Density &HSci){
