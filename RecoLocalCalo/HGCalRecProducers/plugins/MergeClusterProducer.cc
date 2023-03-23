@@ -104,20 +104,17 @@ public:
     }
   }
 
-  std::vector<std::pair<float, float>> mergeTime(edm::Event& evt, size_t size){
+  void mergeTime(edm::Event& evt, size_t size, std::vector<std::pair<float, float>>& times){
     edm::Handle<edm::ValueMap<std::pair<float, float>>> EE, HSi, HSci;
     // get values from all three part of detectors
     evt.getByToken(clustersTimeEE_token_, EE);
     evt.getByToken(clustersTimeHSi_token_, HSi);
     evt.getByToken(clustersTimeHSci_token_, HSci);
     
-    std::vector<std::pair<float, float>> times;
     times.reserve(size);
     addTo(times, *EE);
     addTo(times, *HSi);
     addTo(times, *HSci);
-
-    return times;
   }
   /**
    * @brief get info form event and then call merge
@@ -131,16 +128,14 @@ public:
    * @return merged result
   */
   template <typename T>
-  T createMerge(edm::Event& evt, const edm::EDGetTokenT<T> &EE_token,
-   const edm::EDGetTokenT<T> &HSi_token, const edm::EDGetTokenT<T> &HSci_token){
+  void createMerge(edm::Event& evt, const edm::EDGetTokenT<T> &EE_token,
+   const edm::EDGetTokenT<T> &HSi_token, const edm::EDGetTokenT<T> &HSci_token, T & merge){
     edm::Handle<T> EE, HSi, HSci;
     // get values from all three part of detectors
     evt.getByToken(EE_token, EE);
     evt.getByToken(HSi_token, HSi);
     evt.getByToken(HSci_token, HSci);
-    T merge;
     mergeTogether(merge, *EE, *HSi, *HSci );
-    return merge;
   }
 
 };
@@ -196,13 +191,13 @@ void MergeClusterProducer::produce(edm::Event& evt, const edm::EventSetup& es){
 
   //merge clusters
   std::unique_ptr<std::vector<reco::BasicCluster>> clusters(new std::vector<reco::BasicCluster>);
-  *clusters = createMerge(evt, EEclusters_token_, HSiclusters_token_, HSciclusters_token_);
+  createMerge(evt, EEclusters_token_, HSiclusters_token_, HSciclusters_token_, *clusters );
   //put new clusters to event
   auto clusterHandle  = evt.put(std::move(clusters));
 
   //merge densities
   auto density = std::make_unique<Density>();
-  *density = createMerge(evt, EEdensity_token_, HSidensity_token_, HScidensity_token_);
+  createMerge(evt, EEdensity_token_, HSidensity_token_, HScidensity_token_, *density);
   //put merged density to event
   evt.put(std::move(density));
 
@@ -213,7 +208,8 @@ void MergeClusterProducer::produce(edm::Event& evt, const edm::EventSetup& es){
   evt.put(std::move(layerClustersMask), "InitialLayerClustersMask");
 
   //time
-  auto times = mergeTime(evt, clusterHandle->size());
+  std::vector<std::pair<float, float>> times;
+  mergeTime(evt, clusterHandle->size(), times);
 
   auto timeCl = std::make_unique<edm::ValueMap<std::pair<float, float>>>();
   edm::ValueMap<std::pair<float, float>>::Filler filler(*timeCl);
