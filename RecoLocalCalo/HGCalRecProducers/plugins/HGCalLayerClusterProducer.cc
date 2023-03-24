@@ -30,8 +30,6 @@
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 
-using Density = hgcal_clustering::Density;
-
 class HGCalLayerClusterProducer : public edm::stream::EDProducer<> {
 public:
   /**
@@ -98,8 +96,6 @@ HGCalLayerClusterProducer::HGCalLayerClusterProducer(const edm::ParameterSet& ps
 
   produces<std::vector<float>>("InitialLayerClustersMask");
   produces<std::vector<reco::BasicCluster>>();
-  //density
-  produces<Density>();
   //time for layer clusters
   produces<edm::ValueMap<std::pair<float, float>>>(timeClname);
 }
@@ -123,7 +119,6 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   edm::Handle<HGCRecHitCollection> hits;
 
   std::unique_ptr<std::vector<reco::BasicCluster>> clusters(new std::vector<reco::BasicCluster>);
-  auto density = std::make_unique<Density>();
 
   algo->getEventSetup(es);
 
@@ -143,10 +138,6 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
   *clusters = algo->getClusters(false); 
 
   auto clusterHandle = evt.put(std::move(clusters));
-
-  //Keep the density
-  *density = algo->getDensity();
-  evt.put(std::move(density));
 
   edm::PtrVector<reco::BasicCluster> clusterPtrs;
 
