@@ -24,10 +24,10 @@ namespace ticl {
     ~ClusterFilterByAlgoAndSizeAndLayerRange() override{};
 
     void filter(const std::vector<reco::CaloCluster>& layerClusters,
-                const HgcalClusterFilterMask& availableLayerClusters,
+                const ClusterFilterMask& availableLayerClusters,
                 std::vector<float>& layerClustersMask,
                 hgcal::RecHitTools& rhtools) const override {
-      auto filteredLayerClusters = std::make_unique<HgcalClusterFilterMask>();
+      auto filteredLayerClusters = std::make_unique<ClusterFilterMask>();
       for (auto const& cl : availableLayerClusters) {
         auto const& layerCluster = layerClusters[cl.first];
         auto const& haf = layerCluster.hitsAndFractions();
