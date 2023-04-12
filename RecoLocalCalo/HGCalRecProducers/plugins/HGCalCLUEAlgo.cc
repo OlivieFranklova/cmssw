@@ -103,7 +103,7 @@ void HGCalCLUEAlgoT<T>::makeClusters() {
             prepareDataStructures(i);
             T lt;
             lt.clear();
-            if (cells_[i].isSi[0]){
+            if constexpr (std::is_same_v<T, HGCalSiliconLayerTiles>){
                 lt.fill(cells_[i].x, cells_[i].y);
             }
             else{
