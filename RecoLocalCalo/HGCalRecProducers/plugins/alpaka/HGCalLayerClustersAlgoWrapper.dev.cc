@@ -16,13 +16,14 @@
 #include "HGCalLayerClustersAlgoWrapper.h"
 
 #include "CLUEAlgoAlpaka.h"
+#include "CLUEAlgoAlpaka2D.h"
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
   using namespace cms::alpakatools;
 
   /*
-  class TestAlgoKernel {
+  class TestAlgoKernel { 
   public:
     template <typename TAcc, typename = std::enable_if_t<alpaka::isAccelerator<TAcc>>>
     ALPAKA_FN_ACC void operator()(TAcc const& acc,
@@ -45,33 +46,37 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
   };
   */
-
+ 
   void HGCalLayerClustersAlgoWrapper::run(Queue& queue,
       const unsigned int size,
       const HGCalSoACellsDeviceCollection::ConstView inputs,
       HGCalSoAOutDeviceCollection::View outputs) const {
-
-    CLUEAlgoAlpaka<ALPAKA_ACCELERATOR_NAMESPACE::Acc1D, Queue,
+    // CLUEAlgoAlpaka2D<ALPAKA_ACCELERATOR_NAMESPACE::Acc2D, Queue,
+    // HGCalSiliconTilesConstants, 96> algoStandalone(queue, 1.3f,9.f,2.f,false);
+ 
+    CLUEAlgoAlpaka<ALPAKA_ACCELERATOR_NAMESPACE::Acc1D, Queue, 
     HGCalSiliconTilesConstants, 96> algoStandalone(queue, 1.3f,9.f,2.f,false);
-
+    
     /*
     if constexpr (std::is_same_v<ALPAKA_ACCELERATOR_NAMESPACE::Device, alpaka_common::DevHost>) {
       std::cout << "Collection from HGCalLayerClustersAlgoWrapper@CPU " << inputs.metadata().size() << std::endl;
     }
     */
-    algoStandalone.makeClustersCMSSW(size,
-        inputs.dim1(),
+    algoStandalone.makeClustersCMSSW(size,   
+        inputs.dim1(),  
         inputs.dim2(),
         inputs.layer(),
         inputs.weight(),
         inputs.sigmaNoise(),
         inputs.detid(),
-        outputs.rho(),
+        outputs.rho(), 
         outputs.delta(),
-        outputs.nearestHigher(),
+        outputs.nearestHigher(), 
         outputs.clusterIndex(),
         outputs.isSeed(),
         &outputs.numberOfClustersScalar());
+
+
     /*
     // use 64 items per group (this value is arbitrary, but it's a reasonable starting point)
     uint32_t items = 64;

@@ -16,6 +16,7 @@ hgCalRecHitsSoAProducerEE = hgCalRecHitsSoAProducer_.clone(
   dEdXweights = HGCalRecHit.layerWeights.value(),
   alpaka = cms.untracked.PSet(
     backend = cms.untracked.string('cuda_async')
+    # backend = cms.untracked.string('serial_sync')
   )
 )
 
@@ -28,5 +29,6 @@ hgCalRecHitsSoAProducerHSi = hgCalRecHitsSoAProducer_.clone(
   dEdXweights = HGCalRecHit.layerWeights.value(),
   alpaka = cms.untracked.PSet(
     backend = cms.untracked.string('cuda_async')
+    # backend = cms.untracked.string('serial_sync')
   )
 )
